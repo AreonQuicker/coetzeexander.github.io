@@ -6,7 +6,35 @@
 
 <body>
     <div id="app">
-        {{message}}
+
+        <div v-if="projects.length === 0">
+            <span>No projects to display</span>
+            <button v-on:click="onProjectCreate">create</button>
+        </div>
+        <div v-else=>
+            <div v-for="(project, projId) in projects">
+                <div>{{project.name}}</div>
+                <button v-on:click="onDeleteProject(projId)">delete</button>
+                <button v-on:click="onProjectView(projId)">view</button>
+
+                <div v-if="project.selected">
+                    <div v-for="(task, taskId) in project.tasks">
+                        <div
+                            v-bind:style="[ task.completed ? {'text-decoration': 'line-through'} : {'text-decoration': 'none'}]">{{task.name}}</div>
+                        <button v-on:click="onDeleteTask(projId, taskId)">delete</button>
+
+                        <div v-if="task.completed">
+                            <button v-on:click="onUnComplete(projId, taskId)">uncomplete</button>
+                        </div>
+                        <div v-else>
+                            <button v-on:click="onCompleted(projId, taskId)">complete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.js"></script>
@@ -17,10 +45,70 @@
 
 <script>
     $(function () {
+
         var app = new Vue({
             el: '#app',
             data: {
-                message: 'Hello Vue!'
+                userId: "",
+                projects: [{
+                    created: "2019-10-17",
+                    name: "Deadline Day To Do",
+                    selected: false,
+                    tasks: [{
+                        created: "2019-10-17",
+                        name: "DDTD Task",
+                        completed: false
+                    },
+                    {
+                        created: "2019-10-17",
+                        name: "DDTD Task 2",
+                        completed: false
+                    }]
+                },
+                {
+                    created: "2019-11-17",
+                    name: "Sample Project 2",
+                    selected: false,
+                    tasks: [{
+                        created: "2019-11-17",
+                        name: "Sample Task 2",
+                        completed: false
+                    }]
+                }
+                ]
+            },
+            methods: {
+                onProjectCreate: function(){
+                    var sampleProject = {
+                        created: "2019-11-23",
+                        name: "Sample Project",
+                        selected: false
+                    }
+                    
+                    this.projects.push(sampleProject);
+                },
+                onProjectView: function (projId) {
+                    for (var i = 0; i < this.projects.length; i++) {
+                        this.projects[i].selected = i === projId ? true : false;
+                    }
+                },
+                onDeleteProject: function (projId) {
+                    this.projects.splice(projId, 1)
+                },
+                onDeleteTask: function (projId, taskId) {
+                    var proj = this.projects[projId];
+                    proj.tasks.splice(taskId, 1);
+                },
+                onCompleted: function (projId, taskId) {
+                    var proj = this.projects[projId];
+                    var task = proj.tasks[taskId];
+                    task.completed = true;
+                },
+                onUnComplete: function (projId, taskId) {
+                    var proj = this.projects[projId];
+                    var task = proj.tasks[taskId]
+                    task.completed = false;
+                }
             }
         })
     })
