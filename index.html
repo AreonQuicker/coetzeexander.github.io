@@ -6,32 +6,51 @@
 </head>
 
 <body>
-    <div id="app">
+    <div id="app" class="container">
+        <div class=""></div>
         <div class="row">
-            <div class="col-md-4">
-                <div class="text-center">
-                    <i class="fas fa-plus-circle fa-main-props" title="Create New Project" v-on:click="onProjectCreate"></i>
+            <div class="col-md-3"></div>
+            <div class="col-md-6">
+                <div class="text-center create-new-block">
+                    <i class="fas fa-plus-circle fa-main-props" v-on:click="onProjectCreate"></i>
+                    <div>
+                        <small>Create a new project</small>
+                    </div>
                 </div>
                 <div v-for="(project, projectIndex) in projects">
-                    <project-block 
-                        v-on:on-task-priority="onProjectPriority(projectIndex)" 
-                        v-on:on-project-view="onProjectView(projectIndex)"
-                        v-on:on-project-delete="onProjectDelete(projectIndex)" 
-                        v-bind:name="project.name"
-                        v-bind:created="project.created">
-                    </project-block>
-                    <div v-if="project.selected">
-                        <div v-for="(task, taskIndex) in project.tasks">
-                            <task-block
-                                v-bind:name="task.name"
-                                v-bind:created="task.created"
-                                v-bind:status="task.status"
-                                v-on:on-task-priority="onTaskPriority(projectIndex, taskIndex)">
-                            </task-block>
+                    <div class="card project-block">
+                        <div class="card-body custom-project-block">
+                            <project-block
+                                v-on:on-task-priority="onProjectPriority(projectIndex)" 
+                                v-on:on-project-view="onProjectView(projectIndex)"
+                                v-on:on-project-task-create="onProjectTaskCreate(projectIndex)"
+                                v-on:on-project-delete="onProjectDelete(projectIndex)" 
+                                v-on:on-project-rename="onProjectRename(projectIndex)"
+                                v-bind:name="project.name"
+                                v-bind:created="project.created"
+                                v-bind:state="project.state"
+                                v-bind:index="projectIndex">
+                            </project-block>
+                            <div v-if="project.selected">
+                                <div v-for="(task, taskIndex) in project.tasks">
+                                    <div class="card-body custom-task-block" v-bind:style="{'background-color' : task.status.color}">
+                                        <task-block
+                                            v-bind:name="task.name"
+                                            v-bind:index="taskIndex"
+                                            v-bind:state="task.state"
+                                            v-bind:created="task.created"
+                                            v-bind:status="task.status"
+                                            v-on:on-project-task-rename="onProjectTaskRename(projectIndex, taskIndex)"
+                                            v-on:on-task-priority="onTaskPriority(projectIndex, taskIndex)">
+                                        </task-block>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="col-md-3"></div>
         </div>
     </div>
     </div>
@@ -51,105 +70,67 @@
     $(function () {
 
         Vue.component("task-block", {
-            props: ["name", "created", "status"],
+            props: ["index", "name", "created", "status", "state"],
             template: `
-                <div class="card custom-card" v-bind:style="{'background-color' : status.color}">
-                    <div class="card-body">
-                        <small>{{created}}</small>
-                        <div><b>{{name}}</b></div>
+                <div>
+                        <div>
+                            <small>{{created}}</small>
+                        </div>
+                        <small>
+                                <b>{{status.level}}</b>
+                        </small>
+                        <div v-if="state === 'rename'">
+                            <input :id="['task_name_input' + index]"" class="custom-input" v-on:blur="$emit('on-project-task-rename')"/>
+                        </div>
+                        <div v-else>
+                            <div><b>{{name}}</b></div>
+                        </div>
                         <div class="text-right">
                             <button class="custom-button">
-                                <i class="fas fa-bell fa-secondary-props" title="Priority" v-on:click="$emit('on-task-priority')"></i>
+                                <i class="fas fa-sync-alt fa-secondary-props" title="Priority" v-on:click="$emit('on-task-priority')"></i>
                             </button>
                         </div>
-                    </div>
                 </div>
             `
         });
 
         Vue.component("project-block", {
-            props: ["name", "created"],
+            props: ["index","name", "created", "state"],
             template: `
-                <div class="card">
-                    <div class="card-body custom-project-block">
+                    <div>
                         <small>{{created}}</small>
-                        <div><b>{{name}}</b></div>
+                        <div v-if="state === 'rename'">
+                            <input :id="['project_name_input' + index]" ref="input" class="custom-input" />
+                        </div>
+                        <div v-else>
+                            <div><b>{{name}}</b></div>
+                        </div>
                         <div class="text-right">
                         <button class="custom-button">
-                            <i class="fas fa-eye fa-secondary-props" title="View" v-on:click="$emit('on-project-view')"></i>
+                            <i class="fas fa-eye fa-secondary-props" title="View Tasks" v-on:click="$emit('on-project-view')"></i>
                         </button>
                         <button class="custom-button">
-                            <i class="fas fa-edit fa-secondary-props" title="Edit"></i>
+                            <i class="fas fa-plus-circle fa-secondary-props" title="Add Task" v-on:click="$emit('on-project-task-create')"></i>
                         </button>
                         <button class="custom-button">
                             <i class="fas fa-trash-alt fa-secondary-props" title="Delete" v-on:click="$emit('on-project-delete')"></i>
                         </button>
                         </div>
                     </div>
-                </div>
-            `
+            `,
+            mounted(){
+                var element = this.$refs.input;
+                $(element).focus();
+            }
         });
 
         var app = new Vue({
             el: '#app',
             data: {
                 userId: "",
-                projects: [{
-                    created: "2019-10-17",
-                    name: "Deadline Day To Do",
-                    selected: false,
-                    tasks: [{
-                        created: "2019-10-17",
-                        name: "DDTD Task",
-                        completed: false,
-                        rename: false,
-                        status: {
-                            level: "none",
-                            color: "#bfbfbf"
-                        }
-                    },
-                    {
-                        created: "2019-10-17",
-                        name: "DDTD Task 2",
-                        completed: false,
-                        rename: false,
-                        status: {
-                            level: "none",
-                            color: "#bfbfbf"
-                        }
-                    }]
-                },
-                {
-                    created: "2019-11-17",
-                    name: "Sample Project 2",
-                    selected: false,
-                    tasks: [{
-                        created: "2019-11-17",
-                        name: "Sample Task 2",
-                        completed: false,
-                        status: {
-                            level: "none",
-                            color: "#bfbfbf"
-                        }
-                    }]
-                }
-                ]
+                projects: []
             },
             methods: {
-                onProjectCreate: function () {
-                    var sampleProject = {
-                        created: "2019-11-23",
-                        name: "Sample Project",
-                        selected: false,
-                        rename: true,
-                        priority: {
-                            level: 1,
-                            color: "#bfbfbf"
-                        }
-                    }
-
-                    this.projects.push(sampleProject);
-                },
                 onProjectView: function (projId) {
                     for (var i = 0; i < this.projects.length; i++) {
                         this.projects[i].selected = i === projId ? true : false;
@@ -158,27 +139,62 @@
                 onProjectDelete: function (projId) {
                     this.projects.splice(projId, 1)
                 },
-                onProjectPriority: function (projId) {
-                    var project = this.projects[projId];
-                    switch (project.priority.level) {
-                        case "none":
-                            project.priority.level = "busy";
-                            project.priority.color = "#00b339";
-                            break;
-                        case "busy":
-                            project.priority.level = "done";
-                            project.priority.color = "#ffcc00";
-                            break;
-                        case "done":
-                            project.priority.level = "none";
-                            project.priority.color = "#bfbfbf";
-                            break;
-                    }
-                },
                 onDeleteTask: function (projId, taskId) {
                     var proj = this.projects[projId];
                     proj.tasks.splice(taskId, 1);
                 },
+
+                onProjectCreate: function () {
+                    var project = {
+                        created: "2019-11-23",
+                        name: "Click Here To Enter a Project Name",
+                        state: "rename",
+                        selected: false,
+                        tasks:[]
+                    }
+
+                    this.projects.push(project);
+                },
+                onProjectRename: function(projId){
+                    var proj = this.projects[projId];
+                    var projectName =  $('#project_name_input' + projId).val();
+                    if(projectName === ""){
+                        $('#project_name_input' + projId).val("Project " + (projId + 1))
+                        $('#project_name_input' + projId).focus();
+                    }
+                    else{
+                        proj.name = projectName;
+                    }
+                },
+                onProjectTaskCreate: function(projId){
+                    var proj = this.projects[projId];
+                    proj.selected = true;
+                    var task = {
+                        created: "2019-01-01",
+                        name: "",
+                        state: "rename",
+                        status:{
+                            level: "Not Started",
+                            color: "#51c2db"
+                        }
+                    }
+                    proj.tasks.push(task);
+                },
+                onProjectTaskRename: function(projId, taskId){
+                    var proj = this.projects[projId];
+                    var task = proj.tasks[taskId];
+
+                    var taskName = $('#task_name_input' + taskId).val();
+                    if(taskName === ""){
+                        $('#task_name_input' + taskId).val("Task " + (taskId + 1));
+                        $('#task_name_input' + taskId).focus();
+                    }
+                    else{
+                        task.name = taskName;
+                    }
+                },
+
+
                 onTaskComplete: function (projId, taskId) {
                     var proj = this.projects[projId];
                     var task = proj.tasks[taskId];
@@ -188,17 +204,17 @@
                     var proj = this.projects[projId];
                     var task = proj.tasks[taskId];
                     switch(task.status.level){
-                        case "none": 
-                            task.status.level = "busy";
-                            task.status.color = "#00b339";
+                        case "Not Started": 
+                            task.status.level = "Started";
+                            task.status.color = "#f5a40f";
                             break;
-                        case "busy":
-                            task.status.level = "done";
-                            task.status.color = "#ffcc00";
+                        case "Started":
+                            task.status.level = "Completed";
+                            task.status.color = "#47bf0f";
                             break;
-                        case "done":
-                            task.status.level = "none";
-                            task.status.color = "#bfbfbf";
+                        case "Completed":
+                            task.status.level = "Not Started";
+                            task.status.color = "#51c2db";
                             break;
                     }
                 }
@@ -208,6 +224,16 @@
 </script>
 
 <style>
+    .project-block{
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+    .create-new-block{
+        padding-top: 15px;
+        padding-bottom: 15px;
+        color: lightgrey;
+    }
+
     .custom-button {
         background-color: transparent;
         border: none;
@@ -216,6 +242,11 @@
         background-color: #f2f2f2;
         color: #262626;
     }
+    .custom-task-block{
+        margin-top: 15px;
+        margin-bottom: 15px;
+    }
+
     .custom-button:focus {
         outline: 0;
     }
@@ -225,11 +256,8 @@
     }
 
     .fa-main-props {
-        color: lightgrey;
         cursor: pointer;
         font-size: 50px;
-        padding-top: 15px;
-        padding-bottom: 15px;
     }
 
     .fa-secondary-props {
@@ -237,5 +265,14 @@
         cursor: pointer;
         font-size: 20px;
         padding: 4px 4px 4px 4px;
+    }
+
+    .custom-input{
+        border: none;
+        font-size: 20px;
+        background-color: transparent;
+    }
+    .custom-input:focus{
+        outline: 0;
     }
 </style>
