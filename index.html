@@ -75,21 +75,16 @@
             props: ["proj_index", "task_index", "name", "created", "status", "state"],
             template: `
                 <div>
-                        <div>
-                            <small>{{created}}</small>
-                        </div>
-                        <small>
-                                <b>{{status.level}}</b>
-                        </small>
-                        <div v-if="state === 'rename'">
-                            <input :id="['t_inp_' + taskIndex]" type="text" class="form-control" />
-                        </div>
-                        <div v-else>
-                            <div><b>{{name}}</b></div>
+                        <div class="form-group text-right">
+                            <p><small>{{created}}</small></p>
+                            <p><small><b>{{status.level}}</b></small></p>
+                            <div>
+                                <input :id="['t_inp_' + task_index]" type="text" class="form-control" v-bind:value="name" />
+                            </div>
                         </div>
                         <div class="text-right">
-                            <button class="btn btn-success" title="Change Status">
-                                <i class="fas fa-check-circle"></i>
+                            <button class="btn btn-success" title="Change Status" v-on:click="onTaskStatus(proj_index, task_index)">
+                                <i class="fas fa-angle-double-right"></i>
                             </button>
                             <button class="btn btn-danger" title="Delete Task" v-on:click="onTaskDelete(proj_index, task_index)">
                                 <i class="fas fa-trash-alt"></i>
@@ -101,6 +96,26 @@
                 onTaskDelete: function(projIndex, taskIndex) {
                     var project = this.$root.$data.projects[projIndex];
                     project.tasks.splice(taskIndex, 1);
+                },
+                onTaskStatus: function(projIndex, taskIndex){
+                    debugger
+                    var project = this.$root.$data.projects[projIndex];
+                    var task = project.tasks[taskIndex];
+                    
+                    switch(task.status.level){
+                        case "Not Started": 
+                            task.status.level = "Started";
+                            task.status.color = "#FFFF66";
+                            break;
+                        case "Started":
+                            task.status.level = "Completed";
+                            task.status.color = "#66FF66";
+                            break;
+                        case "Completed":
+                            task.status.level = "Not Started";
+                            task.status.color = "#3399FF";
+                            break;
+                    }
                 }
             }
             
@@ -145,11 +160,11 @@
                     var project = this.$root.$data.projects[projIndex];
                     project.selected = true;
                     var task = {
-                        created: Date.now(),
+                        created: new Date().toDateString(),
                         name: "",
                         status:{
                             level: "Not Started",
-                            color: "#51c2db"
+                            color: "#3399FF"
                         }
                     }
                     project.tasks.push(task);
