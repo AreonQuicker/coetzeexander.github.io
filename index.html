@@ -79,7 +79,7 @@
                             <p><small>{{created}}</small></p>
                             <p><small><b>{{status.level}}</b></small></p>
                             <div>
-                                <input :id="['t_inp_' + task_index]" type="text" class="form-control" v-bind:value="name" />
+                                <input :id="['p' + proj_index + 't' + task_index]" ref="input" type="text" class="form-control form-control-sm" v-bind:value="name" />
                             </div>
                         </div>
                         <div class="text-right">
@@ -116,9 +116,25 @@
                             task.status.color = "#3399FF";
                             break;
                     }
+                },
+                onInputBlur: function(e){
+                    var element = e.data.element;
+                    if($(element).val() === ""){
+                        $(element).val("No Task Name Entered");
+                    }
+                    var projId = element.id.substring((element.id.lastIndexOf('p') + 1), (element.id.lastIndexOf('t')))
+                    var taskId = element.id.substring(element.id.lastIndexOf('t') + 1);
+
+                    var project = this.$root.$data.projects[projId];
+                    var task = project.tasks[taskId];
+                    task.name = $(element).val()
                 }
+            },
+            mounted(){
+                var element = this.$refs.input;
+                $(element).focus();
+                $(element).bind('blur', {element, element}, this.onInputBlur)
             }
-            
         });
 
         Vue.component("project-block", {
